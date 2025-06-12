@@ -1,0 +1,88 @@
+services:
+  # Prefect Server
+  prefect-server:
+    image: prefecthq/prefect:2-python3.11
+    restart: always
+    volumes:
+      - prefect:/root/.prefect
+      - ./prefect:/opt/prefect
+    entrypoint: ["/opt/prefect/entrypoint.sh", "prefect", "server", "start"]
+    environment:
+      - PREFECT_UI_URL=http://127.0.0.1:4200/api
+      - PREFECT_API_URL=http://127.0.0.1:4200/api
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_SERVER_API_PORT=4200
+      - PREFECT_API_DATABASE_CONNECTION_URL=sqlite+aiosqlite:////root/.prefect/prefect.db
+    ports:
+      - "4200:4200"
+    networks:
+      - prefect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Deployment Auto-Register Service
+  prefect-deployer:
+    image: prefecthq/prefect:2-python3.11
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    volumes:
+      - prefect:/root/.prefect
+      - ./prefect:/opt/prefect
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    networks:
+      - prefect
+    entrypoint: ["/opt/prefect/deploy-entrypoint.sh"]
+
+  # Prefect Agent
+  prefect-agent:
+    image: prefecthq/prefect:2-python3.11
+    restart: always
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+      prefect-deployer:
+        condition: service_completed_successfully
+    volumes:
+      - prefect:/root/.prefect
+      - ./prefect:/opt/prefect
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint:
+      [
+        "/opt/prefect/entrypoint.sh",
+        "prefect",
+        "agent",
+        "start",
+        "-q",
+        "default",
+      ]
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    networks:
+      - prefect
+
+  # CLI container for development
+  prefect-cli:
+    image: prefecthq/prefect:2-python3.11
+    profiles: ["cli"]
+    volumes:
+      - prefect:/root/.prefect
+      - ./prefect:/opt/prefect
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    networks:
+      - prefect
+    entrypoint: ["/bin/bash"] # entrypointを明示的にbashに設定
+    stdin_open: true
+    tty: true
+
+volumes:
+  prefect:
+
+networks:
+  prefect:
+    name: prefect

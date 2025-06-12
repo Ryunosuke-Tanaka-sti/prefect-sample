@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# 設定
+PREFECT_API_URL="http://localhost:4200/api"
+FLOW_NAME="Hello World Flow"
+DEPLOYMENT_NAME="Hello World Deployment"
+
+# デプロイメントID取得
+get_deployment_id() {
+    local response=$(curl -s -X POST "${PREFECT_API_URL}/deployments/filter" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "deployments": {"name": {"any_": ["'"$DEPLOYMENT_NAME"'"]}},
+            "flows": {"name": {"any_": ["'"$FLOW_NAME"'"]}}
+        }')
+    
+    echo "$response" | jq -r '.[0].id // empty'
+}
+
+# フロー実行
+run_deployment() {
+    local deployment_id=$1
+    
+    curl -s -X POST "${PREFECT_API_URL}/deployments/${deployment_id}/create_flow_run" \
+        -H "Content-Type: application/json" \
+        -d '{}' | jq -r '.id'
+}
+
+# メイン処理
+echo "デプロイメントID取得中..."
+DEPLOYMENT_ID=$(get_deployment_id)
+
+if [ -z "$DEPLOYMENT_ID" ]; then
+    echo "デプロイメントが見つかりません"
+    exit 1
+fi
+
+echo "デプロイメントID: $DEPLOYMENT_ID"
+
+echo "フロー実行中..."
+FLOW_RUN_ID=$(run_deployment "$DEPLOYMENT_ID")
+
+echo "フロー実行ID: $FLOW_RUN_ID"
+echo "完了しました。フローの実行が完了するまでしばらくお待ちください。"
