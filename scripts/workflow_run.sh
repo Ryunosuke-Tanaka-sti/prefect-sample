@@ -2,8 +2,8 @@
 
 # 設定
 PREFECT_API_URL="http://localhost:4200/api"
-FLOW_NAME="Hello World Flow"
-DEPLOYMENT_NAME="Hello World Deployment"
+FLOW_NAME="Create Data Flow"
+DEPLOYMENT_NAME="Create Data Deployment"
 
 # デプロイメントID取得
 get_deployment_id() {
