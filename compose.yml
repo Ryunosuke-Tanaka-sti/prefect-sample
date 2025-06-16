@@ -1,7 +1,7 @@
 services:
   # Prefect Server
   prefect-server:
-    image: prefecthq/prefect:2-python3.11
+    image: prefecthq/prefect:3.4.6-python3.11
     restart: always
     volumes:
       - prefect:/root/.prefect
@@ -25,7 +25,7 @@ services:
 
   # Deployment Auto-Register Service
   prefect-deployer:
-    image: prefecthq/prefect:2-python3.11
+    image: prefecthq/prefect:3.4.6-python3.11
     depends_on:
       prefect-server:
         condition: service_healthy
@@ -36,11 +36,11 @@ services:
       - PREFECT_API_URL=http://prefect-server:4200/api
     networks:
       - prefect
-    entrypoint: ["/opt/prefect/deploy-entrypoint.sh"]
+    entrypoint: ["/opt/prefect/scripts/deploy-entrypoint.sh"]
 
-  # Prefect Agent
-  prefect-agent:
-    image: prefecthq/prefect:2-python3.11
+  # Prefect worker
+  prefect-worker:
+    image: prefecthq/prefect:3.4.6-python3.11
     restart: always
     depends_on:
       prefect-server:
@@ -53,11 +53,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     entrypoint:
       [
-        "/opt/prefect/entrypoint.sh",
+        "/opt/prefect/scripts/entrypoint.sh",
         "prefect",
-        "agent",
+        "worker",
         "start",
-        "-q",
+        "-pool",
         "default",
       ]
     environment:
@@ -67,7 +67,7 @@ services:
 
   # CLI container for development
   prefect-cli:
-    image: prefecthq/prefect:2-python3.11
+    image: prefecthq/prefect:3.4.6-python3.11
     profiles: ["cli"]
     volumes:
       - prefect:/root/.prefect

@@ -1,0 +1,14 @@
+services:
+  python-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    ports:
+      - "4201:4200" # Prefect Server
+    environment:
+      - PYTHONPATH=/workspace
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_SERVER_API_PORT=4200

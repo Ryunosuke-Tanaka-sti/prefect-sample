@@ -43,9 +43,6 @@ setup_prefect() {
     # ワークプールの作成（エラーを無視）
     prefect work-pool create --type process default 2>/dev/null || true
     
-    # デプロイメント保存用ディレクトリ作成
-    mkdir -p /opt/prefect/deployments
-    
     echo "Prefectの設定が完了しました"
 }
 
@@ -54,21 +51,11 @@ test_flows() {
     echo "フローのテスト実行中..."
     
     cd /opt/prefect
-    
-    # echo "-> Hello World Flow テスト"
-    # python -m flows.hello_world_flow || {
-    #     echo "警告: Hello World Flow のテスト実行に失敗しました"
-    # }
 
     echo "-> Create Data Flow テスト"
     python -m flows.create_data_flow || {
         echo "警告: Create Data Flow のテスト実行に失敗しました"
     }
-    
-    # echo "-> Download File Flow テスト"
-    # python -m flows.download_file_flow || {
-    #     echo "警告: Download File Flow のテスト実行に失敗しました"
-    # }
 
     echo "-> Get Data Flow テスト"
     python -m flows.get_data_flow || {
@@ -85,63 +72,24 @@ create_deployments() {
     
     cd /opt/prefect
     
-    # # Hello World Flow
-    # echo "-> Hello World Flow デプロイメント作成"
-    # prefect deployment build flows/hello_world_flow.py:hello_world_flow \
-    #     --name "Hello World Deployment" \
-    #     --description "シンプルなモックワークフロー" \
-    #     --version "1.0.0" \
-    #     --pool "default" \
-    #     --output deployments/hello_world_deployment.yaml \
-    #     --apply || {
-    #     echo "エラー: Hello World Deployment の作成に失敗しました"
-    #     exit 1
-    # }
-    
 
     # Create Data Flow  
     echo "-> Create Data Flow デプロイメント作成"
-    prefect deployment build flows/create_data_flow.py:create_data_flow \
+    prefect deploy flows/create_data_flow.py:create_data_flow \
         --name "Create Data Deployment" \
         --description "データ作成のモックワークフロー" \
         --version "1.0.0" \
-        --pool "default" \
-        --output deployments/create_data_flow_deployment.yaml \
-        --apply || {
-        echo "エラー: Create Data Deployment の作成に失敗しました"
-        exit 1
-    }
+        --pool "default"
     
-    
-    # # Download File Flow
-    # echo "-> Download File Flow デプロイメント作成"
-    # prefect deployment build flows/download_file_flow.py:download_file_flow \
-    #     --name "Download File Deployment" \
-    #     --description "ファイルダウンロードのモックワークフロー" \
-    #     --version "1.0.0" \
-    #     --pool "default" \
-    #     --output deployments/download_file_deployment.yaml \
-    #     --apply || {
-    #     echo "エラー: Download File Deployment の作成に失敗しました"
-    #     exit 1
-    # }
-
     # Get Data Flow  
     echo "-> Get Data Flow デプロイメント作成"
-    prefect deployment build flows/get_data_flow.py:get_data_flow \
+    prefect deploy flows/get_data_flow.py:get_data_flow \
         --name "Get Data Deployment" \
         --description "データ作成のモックワークフロー" \
         --version "1.0.0" \
-        --pool "default" \
-        --output deployments/get_data_flow_deployment.yaml \
-        --apply || {
-        echo "エラー: Get Data Deployment の作成に失敗しました"
-        exit 1
-    }
-
+        --pool "default" 
     
     echo "すべてのデプロイメントが作成されました"
-    echo "デプロイメントファイル保存場所: /opt/prefect/deployments/"
 }
 
 # デプロイメント一覧表示
@@ -191,9 +139,6 @@ main() {
     echo "🚀 利用可能なデプロイメント:"
     echo "   - Create Data Flow/Create Data Deployment"
     echo "   - Get Data Flow/Get Data Deployment"
-    echo ""
-    echo "📁 デプロイメントファイル保存場所:"
-    echo "   /opt/prefect/deployments/ (ローカル: ./prefect/deployments/)"
     echo ""
     echo "💡 Agentも自動で起動され、ワークフローを実行する準備が整いました"
 }

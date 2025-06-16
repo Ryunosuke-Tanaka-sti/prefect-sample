@@ -1,7 +1,15 @@
 #!/bin/bash
 
+# jqとcurlのインストール
+if ! command -v jq &> /dev/null || ! command -v curl &> /dev/null; then
+    echo "jqとcurlが必要です。インストールします..."
+    apt-get update -qq > /dev/null 2>&1
+    apt-get install -y jq curl > /dev/null 2>&1
+    echo "インストール完了"
+fi
+
 # 設定
-PREFECT_API_URL="http://localhost:4200/api"
+PREFECT_API_URL="http://prefect-server:4200/api"
 
 # 全デプロイメント取得
 get_all_deployments() {
